@@ -48,6 +48,7 @@
   "license": "MIT",
   "dependencies": {
     "@types/ws": "^8.5.10",
+    "electron-packager": "^17.1.2",
     "electron-squirrel-startup": "^1.0.1",
     "os": "^0.1.2",
     "react": "^18.3.1",

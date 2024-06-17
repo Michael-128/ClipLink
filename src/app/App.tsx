@@ -17,7 +17,7 @@ function App() {
     }
 
     async function getTheme() {
-        const theme = await window.api.invoke("getTheme")
+        const theme = await window.api.invoke("getNativeTheme")
         setTheme(theme)
     }
 
