@@ -9,6 +9,7 @@ import { emitServerStatus, startWSServer, stopWSServer } from './server';
 import { emitClientStatus, startWSClient, stopWSClient } from './client';
 import { getLocalIP } from './localip';
 import { setLoggerTarget } from './logger';
+import { getTheme, setThemeTarget } from './theme';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -18,14 +19,16 @@ if (require('electron-squirrel-startup')) {
 const createWindow = (): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    height: 600,
-    width: 800,
+    height: 800,
+    width: 600,
+    resizable: false,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       sandbox: false
     },
   });
 
+  setThemeTarget(mainWindow)
   setLoggerTarget(mainWindow)
 
   ipcMain.on('startWSServer', (event, ...args) => { startWSServer(mainWindow, args.length > 0 ? args[0] : 8081) })
@@ -37,6 +40,7 @@ const createWindow = (): void => {
   ipcMain.on('stopWSServer', stopWSServer)
   ipcMain.on('stopWSClient', stopWSClient)
 
+  ipcMain.handle('getTheme', () => { return getTheme() })
   ipcMain.handle('getLocalIP', () => {
     return getLocalIP();
   });
@@ -45,7 +49,7 @@ const createWindow = (): void => {
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  //mainWindow.webContents.openDevTools();
 };
 
 // This method will be called when Electron has finished

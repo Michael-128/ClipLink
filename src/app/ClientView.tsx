@@ -1,14 +1,27 @@
 import React, { useEffect, useState } from "react";
 import componentStyles from "../components";
 import ClientStatus from "../types/ClientStatus";
+import { getClientIP, getClientPort, saveClientIP, saveClientPort } from "../storage";
 
 function ClientView() {
+    let isMonitoring = false
     const [clientStatus, setClientStatus] = useState(ClientStatus.CLOSE)
-    const [ip, setIP] = useState("")
-    const [port, setPort] = useState(21888)
+    const [ip, _setIP] = useState(getClientIP())
+    const [port, _setPort] = useState(getClientPort())
+
+    function setPort(port: number) {
+        _setPort(port)
+        saveClientPort(port)
+    }
+
+    function setIP(ip: string) {
+        _setIP(ip)
+        saveClientIP(ip)
+    }
+
 
     function handleConnect() {
-        if(ClientStatus.CLOSE) { window.api.send("startWSClient", ip, port) }
+        if(clientStatus === ClientStatus.CLOSE) { window.api.send("startWSClient", ip, port) }
         else { window.api.send("stopWSClient") }
     }
 
@@ -17,10 +30,12 @@ function ClientView() {
     }
 
     function monitorClientStatus() {
+        if(isMonitoring) return
         window.api.on("client-status", (event, ...args) => {
             setClientStatus(args[0].status)
             console.log(clientStatus)
         })
+        isMonitoring = true
     }
 
     useEffect(() => { monitorClientStatus(); getClientStatus() }, [])

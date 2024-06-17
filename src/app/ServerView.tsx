@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from "react";
 import componentStyles from "../components";
 import ServerStatus from "../types/ServerStatus";
+import { getServerPort, saveServerPort } from "../storage";
 
 function ServerView() {
+    let isMonitoring = false
     const [ip, setIP] = useState("127.0.0.1")
-    const [port, setPort] = useState(21888)
+    const [port, _setPort] = useState(getServerPort())
     const [serverStatus, setServerStatus] = useState<ServerStatus>(ServerStatus.CLOSE)
+
+    function setPort(port: number) {
+        _setPort(port)
+        saveServerPort(port)
+    }
 
     async function getLocalIP() {
         const localIP = await window.api.invoke("getLocalIP")
@@ -17,10 +24,12 @@ function ServerView() {
     }
 
     function monitorServerStatus() {
+        if(isMonitoring) return
         window.api.on("server-status", (event, ...args) => {
             setServerStatus(args[0].status)
             console.log(serverStatus)
         })
+        isMonitoring = true
     }
 
     function handleStartServer() {

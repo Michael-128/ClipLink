@@ -52,5 +52,4 @@ export async function startWSClient(mainWindow: BrowserWindow, ip = "localhost",
 
 export async function stopWSClient() {
     if(ws) ws.close()
-    ws = undefined
 }

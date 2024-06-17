@@ -1,8 +1,9 @@
 import React from "react";
+import AppMode from "../types/AppMode";
 
 interface IPicker {
     selection: string
-    setSelection: (value: string) => void
+    setSelection: (value: AppMode) => void
 }
 
 function CPicker({ selection, setSelection }: IPicker) {
@@ -13,8 +14,8 @@ function CPicker({ selection, setSelection }: IPicker) {
                 <input
                     type="radio"
                     value="server"
-                    checked={selection === "server"}
-                    onChange={() => setSelection("server")}
+                    checked={selection === AppMode.SERVER}
+                    onChange={() => setSelection(AppMode.SERVER)}
                     className="mr-2"
                 />
                 Server
@@ -23,8 +24,8 @@ function CPicker({ selection, setSelection }: IPicker) {
                 <input
                     type="radio"
                     value="client"
-                    checked={selection === "client"}
-                    onChange={() => setSelection("client")}
+                    checked={selection === AppMode.CLIENT}
+                    onChange={() => setSelection(AppMode.CLIENT)}
                     className="mr-2"
                 />
                 Client
