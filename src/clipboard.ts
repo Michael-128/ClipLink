@@ -2,13 +2,17 @@ import { clipboard } from "electron"
 
 let previousText = ""
 
+export function setPreviousText(text: string) {
+    previousText = text
+}
+
 export function monitorClipboard(callback: (clipboard: string) => void) {
     setInterval(() => {
         const clipboardContent = clipboard.readText()
 
         if(clipboardContent == previousText) return
 
-        previousText = clipboardContent
+        setPreviousText(clipboardContent)
         callback(clipboardContent)
     }, 500)
 }

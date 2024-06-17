@@ -1,5 +1,5 @@
 import WebSocket from "ws"
-import { copyToClipboard, monitorClipboard } from "./clipboard"
+import { copyToClipboard, monitorClipboard, setPreviousText } from "./clipboard"
 import { stopWSServer } from "./server"
 import ClientStatus from "./types/ClientStatus"
 import { BrowserWindow } from "electron"
@@ -36,6 +36,7 @@ export async function startWSClient(mainWindow: BrowserWindow, ip = "localhost",
 
     ws.on('message', (message) => {
         log("[C] Incoming", message.toString())
+        setPreviousText(message.toString())
         copyToClipboard(message.toString())
     })
 
