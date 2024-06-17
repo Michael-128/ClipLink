@@ -1,26 +1,55 @@
 import WebSocket from "ws"
 import { copyToClipboard, monitorClipboard } from "./clipboard"
+import { stopWSServer } from "./server"
+import ClientStatus from "./types/ClientStatus"
+import { BrowserWindow } from "electron"
+import { log } from "./logger"
 
 let ws: WebSocket
 
-export async function startWSClient(ip = "localhost", port = "8081") {
-    console.log("Starting client...")
+let clientStatus: ClientStatus = ClientStatus.CLOSE
 
+export function emitClientStatus(mainWindow: BrowserWindow) {
+    mainWindow.webContents.send("client-status", {"status": clientStatus})
+}
+
+function setClientStatus(mainWindow: BrowserWindow, status: ClientStatus) {
+    clientStatus = status
+    emitClientStatus(mainWindow)
+}
+
+export async function startWSClient(mainWindow: BrowserWindow, ip = "localhost", port = "8081") {
+    stopWSServer()
+
+    log("Starting client...")
+    
     ws = new WebSocket(`ws://${ip}:${port}`)
 
     ws.on('open', () => {
+        setClientStatus(mainWindow, ClientStatus.OPEN)
+
         monitorClipboard((clipboard: string) => {
-            console.log("[C] Outgoing", clipboard)
+            log("[C] Outgoing", clipboard)
             ws.send(clipboard)
         })
     })
 
     ws.on('message', (message) => {
-        console.log("[C] Incoming", message.toString())
+        log("[C] Incoming", message.toString())
         copyToClipboard(message.toString())
+    })
+
+    ws.on('close', () => {
+        log("Stopping client...")
+        setClientStatus(mainWindow, ClientStatus.CLOSE)
+    })
+
+    ws.on('error', (err) => {
+        log(err.message)
     })
 }
 
 export async function stopWSClient() {
-    ws.close()
+    if(ws) ws.close()
+    ws = undefined
 }

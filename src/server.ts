@@ -1,37 +1,58 @@
 import { WebSocketServer } from "ws"
 import { copyToClipboard, monitorClipboard } from "./clipboard"
 import { BrowserWindow, ipcMain, ipcRenderer } from "electron";
+import ServerStatus from "./types/ServerStatus";
+import { stopWSClient } from "./client";
+import { log } from "./logger";
 
 let wss: WebSocketServer;
+let serverStatus: ServerStatus = ServerStatus.CLOSE
+
+export function emitServerStatus(mainWindow: BrowserWindow) {
+    mainWindow.webContents.send("server-status", {"status": serverStatus})
+}
+
+function setServerStatus(mainWindow: BrowserWindow, status: ServerStatus) {
+    serverStatus = status
+    emitServerStatus(mainWindow)
+}
 
 export async function startWSServer(mainWindow: BrowserWindow, port = 8081) {
-    console.log("Starting server...")
+    stopWSClient()
+
+    log("Starting server...")
 
     wss = new WebSocketServer({port: port})
 
     wss.on('listening', () => {
-        mainWindow.webContents.send("server-status", {"status": "listening"})
+        setServerStatus(mainWindow, ServerStatus.LISTENING)
     })
 
     wss.on('connection', (ws) => {
         //ipcMain.emit("server-status", {"status": "connection"})
 
         ws.on('message', (message) => {
-            console.log("[S] Incoming", message.toString())
+            log("[S] Incoming", message.toString())
             copyToClipboard(message.toString())
         })
 
         monitorClipboard((clipboard) => {
-            console.log("[S] Outgoing", clipboard)
+            log("[S] Outgoing", clipboard)
             ws.send(clipboard)
         })
     })
 
     wss.on('close', () => {
-        mainWindow.webContents.send("server-status", {"status": "close"})
+        log("Stopping server...")
+        setServerStatus(mainWindow, ServerStatus.CLOSE)
+    })
+
+    wss.on('error', (err) => {
+        log(err.message)
     })
 }
 
 export async function stopWSServer() {
-    wss.close()
+    if(wss) wss.close()
+    wss = undefined
 }

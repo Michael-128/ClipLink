@@ -5,8 +5,10 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
-import { startWSServer, stopWSServer } from './server';
-import { startWSClient, stopWSClient } from './client';
+import { emitServerStatus, startWSServer, stopWSServer } from './server';
+import { emitClientStatus, startWSClient, stopWSClient } from './client';
+import { getLocalIP } from './localip';
+import { setLoggerTarget } from './logger';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -24,11 +26,20 @@ const createWindow = (): void => {
     },
   });
 
+  setLoggerTarget(mainWindow)
+
   ipcMain.on('startWSServer', (event, ...args) => { startWSServer(mainWindow, args.length > 0 ? args[0] : 8081) })
-  ipcMain.on('startWSClient', (event, ...args) => { startWSClient(...args) })
+  ipcMain.on('startWSClient', (event, ...args) => { try { startWSClient(mainWindow, ...args) } catch(e) { console.error(e) } })
+  
+  ipcMain.on("emitWSServerStatus", () => { emitServerStatus(mainWindow) })
+  ipcMain.on("emitWSClientStatus", () => { emitClientStatus(mainWindow) })
 
   ipcMain.on('stopWSServer', stopWSServer)
   ipcMain.on('stopWSClient', stopWSClient)
+
+  ipcMain.handle('getLocalIP', () => {
+    return getLocalIP();
+  });
 
   // and load the index.html of the app.
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
