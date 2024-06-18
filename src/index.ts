@@ -17,6 +17,8 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
+let isHandlersRegistered = false;
+
 const createWindow = (): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -29,26 +31,29 @@ const createWindow = (): void => {
     },
   });
 
-  setThemeTarget(mainWindow)
-  setLoggerTarget(mainWindow)
+  if(!isHandlersRegistered) {
+    setThemeTarget(mainWindow)
+    setLoggerTarget(mainWindow)
 
-  ipcMain.on('startWSServer', (event, ...args) => { startWSServer(mainWindow, args.length > 0 ? args[0] : 8081) })
-  ipcMain.on('startWSClient', (event, ...args) => { try { startWSClient(mainWindow, ...args) } catch(e) { console.error(e) } })
-  
-  ipcMain.on("emitWSServerStatus", () => { emitServerStatus(mainWindow) })
-  ipcMain.on("emitWSClientStatus", () => { emitClientStatus(mainWindow) })
+    ipcMain.on('startWSServer', (event, ...args) => { startWSServer(mainWindow, args.length > 0 ? args[0] : 8081) })
+    ipcMain.on('startWSClient', (event, ...args) => { try { startWSClient(mainWindow, ...args) } catch(e) { console.error(e) } })
+    
+    ipcMain.on("emitWSServerStatus", () => { emitServerStatus(mainWindow) })
+    ipcMain.on("emitWSClientStatus", () => { emitClientStatus(mainWindow) })
 
-  ipcMain.on('stopWSServer', stopWSServer)
-  ipcMain.on('stopWSClient', stopWSClient)
+    ipcMain.on('stopWSServer', stopWSServer)
+    ipcMain.on('stopWSClient', stopWSClient)
 
-  ipcMain.handle('getNativeTheme', () => { return getTheme() })
-  ipcMain.handle('getLocalIP', () => {
-    return getLocalIP();
-  });
+    ipcMain.handle('getNativeTheme', () => { return getTheme() })
+    ipcMain.handle('getLocalIP', () => {
+      return getLocalIP();
+    });
+
+    isHandlersRegistered = true
+  }
 
   // and load the index.html of the app.
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
-
   // Open the DevTools.
   //mainWindow.webContents.openDevTools();
 };
@@ -62,9 +67,9 @@ app.on('ready', createWindow);
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+  //if (process.platform !== 'darwin') {
     app.quit();
-  }
+  //}
 });
 
 app.on('activate', () => {
